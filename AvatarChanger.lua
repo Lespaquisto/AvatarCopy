@@ -19,14 +19,14 @@ function loadMainGui()
         Desc = "Made By: BilalGanteng",
         Icon = 11041446595,
         Config = {Keybind = Enum.KeyCode.LeftControl, Size = UDim2.new(0,450,0,350)},
-        CloseUIButton = {Enabled=true, Text="Menu"}
+        CloseUIButton = {Enabled=true, Text="Menu"}  -- Text mungkin di-ignore, tapi tetep dicoba
     })
 
     local Me1 = Players.LocalPlayer
 
     -- === Avatar Changer Tab ===
     local Tab1 = Win1:Tab({Title = "Avatar Changer", Icon = "user"})
-    Tab1:Section({Title = "1ks"})
+    Tab1:Section({Title = "BiG"})
     local Inp1 = ""
 
     Tab1:Textbox({
@@ -91,11 +91,9 @@ function loadMainGui()
     local Tab2 = Win1:Tab({Title="Name Changer", Icon="user"})
     Tab2:Section({Title="Edit Names"})
 
-    -- Fake name variables
     local FakeDisplay = Me1.DisplayName
     local FakeUser = Me1.Name
 
-    -- Username input
     local usernameInput = ""
     Tab2:Textbox({
         Title="Edit Username",
@@ -115,7 +113,6 @@ function loadMainGui()
         end
     })
 
-    -- DisplayName input
     local displaynameInput = ""
     Tab2:Textbox({
         Title="Edit DisplayName",
@@ -217,11 +214,14 @@ function loadMainGui()
 - This helps avoid conflicts with pressed folders and preserves your previous items.
 ]]})
 
-    -- === Permanent cartoony pink GUI ===
-    for _, Frame in pairs(Win1:Children()) do
+    -- === Permanent cartoony pink GUI (gunakan GetDescendants biar lebih dalam)
+    for _, Frame in pairs(Win1:GetDescendants()) do
         if Frame:IsA("Frame") then
             Frame.BackgroundColor3 = Color3.fromRGB(255,182,193)
             if Frame:FindFirstChild("UICorner") then Frame.UICorner.CornerRadius=UDim.new(0,15) end
         end
     end
 end
+
+-- JANGAN LUPA PANGGIL FUNGSINYA!
+loadMainGui()
