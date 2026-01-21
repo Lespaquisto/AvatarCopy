@@ -4,8 +4,6 @@ local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")  -- Untuk simulasi key press kalau perlu
 
 -- ====== FORWARD DECLARE MAIN GUI ======
 local function loadMainGui() end
@@ -15,89 +13,26 @@ function loadMainGui()
     -- Load the UI framework
     local UI1 = loadstring(game:HttpGet("https://gist.githubusercontent.com/1ksScripts/9677b4adf372380252e8e840209094e0/raw/18a19028d2114df920421eba871e37fee43aa59f/1ksMakesScriptBestScriptUniversal"))()
 
-    -- Main window - DISABLE CloseUIButton bawaan supaya nggak bentrok
+    -- Main window
     local Win1 = UI1:Window({
         Title = "BiG Hub",
-        Desc = "Made By: Bilal Ganteng",
+        Desc = "Made By: BilalGanteng",
         Icon = 11041446595,
         Config = {Keybind = Enum.KeyCode.LeftControl, Size = UDim2.new(0,450,0,350)},
-        CloseUIButton = {Enabled = false}  -- Hilangkan tombol bawaan!
+        CloseUIButton = {Enabled=true, Text="Menu"}
     })
 
     local Me1 = Players.LocalPlayer
 
-    -- Buat SATU tombol toggle custom (dark gray, mirip library default, bukan pink!)
-    local ToggleGui = Instance.new("ScreenGui")
-    ToggleGui.Name = "BiGToggle"
-    ToggleGui.ResetOnSpawn = false
-    ToggleGui.Parent = CoreGui
-
-    local ToggleBtn = Instance.new("TextButton")
-    ToggleBtn.Name = "ToggleBtn"
-    ToggleBtn.Size = UDim2.new(0, 90, 0, 35)
-    ToggleBtn.Position = UDim2.new(0, 15, 0, 15)  -- Atas kiri, gampang dilihat
-    ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)  -- Dark gray default
-    ToggleBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-    ToggleBtn.Font = Enum.Font.GothamSemibold
-    ToggleBtn.TextSize = 16
-    ToggleBtn.Text = "Open"  -- Awal tertutup (biar aman)
-    ToggleBtn.BorderSizePixel = 0
-    ToggleBtn.Parent = ToggleGui
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = ToggleBtn
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(80, 80, 80)
-    stroke.Thickness = 1
-    stroke.Parent = ToggleBtn
-
-    -- Fungsi toggle: simulasi tekan LeftControl supaya library handle animasi sendiri
-    local function toggleGui()
-        -- Simulasi key press LeftControl (library toggle sendiri)
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-        task.wait(0.05)
-        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
-    end
-
-    -- Klik tombol → toggle
-    ToggleBtn.MouseButton1Click:Connect(toggleGui)
-
-    -- Sync text tombol (cek apakah UI visible via cari CanvasGroup di library ScreenGui)
-    local function updateText()
-        local visible = false
-        for _, gui in pairs(CoreGui:GetChildren()) do
-            if gui:IsA("ScreenGui") and gui.Name ~= "BiGToggle" and gui:FindFirstChildWhichIsA("CanvasGroup") then
-                local cg = gui:FindFirstChildWhichIsA("CanvasGroup")
-                if cg and cg.GroupTransparency < 0.5 then
-                    visible = true
-                    break
-                end
-            end
-        end
-        ToggleBtn.Text = visible and "Close" or "Open"
-    end
-
-    -- Update text setiap frame (ringan, nggak lag)
-    RunService.Heartbeat:Connect(updateText)
-
-    -- Awal: tutup GUI kalau library auto open, biar tombol "Open"
-    task.delay(1, function()
-        if ToggleBtn.Text == "Close" then
-            toggleGui()  -- Tutup dulu
-        end
-    end)
-
-    -- Sisanya sama (Avatar Changer, Name Changer, dll)
+    -- === Avatar Changer Tab ===
     local Tab1 = Win1:Tab({Title = "Avatar Changer", Icon = "user"})
-    Tab1:Section({Title = "BiG"})
+    Tab1:Section({Title = "1ks"})
     local Inp1 = ""
 
     Tab1:Textbox({
         Title = "Set target username or userid",
         Desc = "Enter any player username or UserID",
-        Placeholder = "npa_sab",
+        Placeholder = "im cool",
         Value = "",
         ClearTextOnFocus = false,
         Callback = function(txt) Inp1 = txt end
@@ -152,15 +87,141 @@ function loadMainGui()
         return true
     end
 
-    -- (Lanjutkan dengan Name Changer, Discord, How To Use seperti sebelumnya - copy dari script lama kalau perlu)
+    -- === Name Changer Tab ===
+    local Tab2 = Win1:Tab({Title="Name Changer", Icon="user"})
+    Tab2:Section({Title="Edit Names"})
 
-    -- Pink theme untuk window (tetep)
-    for _, Frame in pairs(Win1:GetDescendants()) do
+    -- Fake name variables
+    local FakeDisplay = Me1.DisplayName
+    local FakeUser = Me1.Name
+
+    -- Username input
+    local usernameInput = ""
+    Tab2:Textbox({
+        Title="Edit Username",
+        Desc="Set a fake username",
+        Placeholder="New Username",
+        Value="",
+        ClearTextOnFocus=false,
+        Callback=function(txt) usernameInput = txt end
+    })
+    Tab2:Button({
+        Title="Apply Username",
+        Desc="Apply the new fake username",
+        Callback=function()
+            if usernameInput and usernameInput:match("%S") then
+                FakeUser = usernameInput
+            end
+        end
+    })
+
+    -- DisplayName input
+    local displaynameInput = ""
+    Tab2:Textbox({
+        Title="Edit DisplayName",
+        Desc="Set a fake DisplayName",
+        Placeholder="New DisplayName",
+        Value="",
+        ClearTextOnFocus=false,
+        Callback=function(txt) displaynameInput = txt end
+    })
+    Tab2:Button({
+        Title="Apply DisplayName",
+        Desc="Apply the new fake display name",
+        Callback=function()
+            if displaynameInput and displaynameInput:match("%S") then
+                FakeDisplay = displaynameInput
+            end
+        end
+    })
+
+    -- Background logic to replace names in all CoreGui labels/buttons
+    local function applyReplacements(text)
+        if not text or text == "" then return nil end
+        local origDisp, origUser = Me1.DisplayName, Me1.Name
+        local changed = false
+
+        if origDisp ~= "" and text:find(origDisp..":", 1, true) then
+            text = text:gsub(origDisp, FakeDisplay)
+            changed = true
+        elseif text == origDisp then
+            text = FakeDisplay
+            changed = true
+        end
+
+        if origUser ~= "" and text:find("@"..origUser, 1, true) then
+            text = text:gsub("@"..origUser, "@"..FakeUser)
+            changed = true
+        elseif text == "@"..origUser then
+            text = "@"..FakeUser
+            changed = true
+        end
+
+        return changed and text or nil
+    end
+
+    local function patchLabel(lbl)
+        local newText = applyReplacements(lbl.Text)
+        if newText then lbl.Text = newText end
+    end
+
+    local function watchGui(root)
+        root.DescendantAdded:Connect(function(d)
+            if d:IsA("TextLabel") or d:IsA("TextButton") then
+                d:GetPropertyChangedSignal("Text"):Connect(function()
+                    patchLabel(d)
+                end)
+                patchLabel(d)
+            end
+        end)
+        for _,d in ipairs(root:GetDescendants()) do
+            if d:IsA("TextLabel") or d:IsA("TextButton") then
+                d:GetPropertyChangedSignal("Text"):Connect(function()
+                    patchLabel(d)
+                end)
+                patchLabel(d)
+            end
+        end
+    end
+
+    watchGui(CoreGui)
+    RunService.RenderStepped:Connect(function()
+        for _,lbl in ipairs(CoreGui:GetDescendants()) do
+            if lbl:IsA("TextLabel") or lbl:IsA("TextButton") then
+                patchLabel(lbl)
+            end
+        end
+    end)
+
+    -- === Discord Invite Tab ===
+    local TabDiscord = Win1:Tab({Title = "Discord Invite", Icon = "link"})
+    TabDiscord:Section({Title = "My Discord Invite"})
+    TabDiscord:Label({Title = "https://discord.com/invite/kJdg4JJSE6"})
+    TabDiscord:Button({
+        Title = "Copy Discord Invite Link",
+        Desc = "Copies the invite link to your clipboard",
+        Callback = function()
+            setclipboard("https://discord.com/invite/kJdg4JJSE6")
+            Win1:Notify({Title="Copied!", Desc="Discord invite copied!", Time=3})
+        end
+    })
+
+    -- === How To Use Tab ===
+    local TabHowTo = Win1:Tab({Title = "How To Use", Icon = "info"})
+    TabHowTo:Section({Title = "Instructions"})
+    TabHowTo:Label({Title = [[
+- If you play fighting games, especially The Strongest Battlegrounds,
+  only keep Classic Shirt and Classic Pants on, or the avatar will stay with the new one.
+- In other games, you can keep your full avatar.
+- Some games may retain items; if they do, remove them manually.
+- This helps avoid conflicts with pressed folders and preserves your previous items.
+]]})
+
+    -- === Permanent cartoony pink GUI ===
+    for _, Frame in pairs(Win1:Children()) do
         if Frame:IsA("Frame") then
             Frame.BackgroundColor3 = Color3.fromRGB(255,182,193)
             if Frame:FindFirstChild("UICorner") then Frame.UICorner.CornerRadius=UDim.new(0,15) end
         end
     end
 end
-
-loadMainGui()
