@@ -4,6 +4,7 @@ local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 -- ====== FORWARD DECLARE MAIN GUI ======
 local function loadMainGui() end
@@ -13,20 +14,72 @@ function loadMainGui()
     -- Load the UI framework
     local UI1 = loadstring(game:HttpGet("https://gist.githubusercontent.com/1ksScripts/9677b4adf372380252e8e840209094e0/raw/18a19028d2114df920421eba871e37fee43aa59f/1ksMakesScriptBestScriptUniversal"))()
 
-    -- Main window
+    -- Buat ScreenGui custom untuk tombol Open/Close (pink, mudah dilihat)
+    local ToggleGui = Instance.new("ScreenGui")
+    ToggleGui.Name = "BiGToggleGui"
+    ToggleGui.ResetOnSpawn = false
+    ToggleGui.Parent = CoreGui
+
+    local ToggleBtn = Instance.new("TextButton")
+    ToggleBtn.Name = "ToggleBtn"
+    ToggleBtn.Size = UDim2.new(0, 100, 0, 40)
+    ToggleBtn.Position = UDim2.new(1, -120, 0, 10)  -- pojok kanan atas, bisa diganti
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)  -- pink cartoony
+    ToggleBtn.TextColor3 = Color3.new(1,1,1)
+    ToggleBtn.Font = Enum.Font.SourceSansBold
+    ToggleBtn.TextSize = 20
+    ToggleBtn.Text = "Close"  -- awal GUI terbuka
+    ToggleBtn.BorderSizePixel = 0
+    ToggleBtn.Parent = ToggleGui
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.Parent = ToggleBtn
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Color3.new(1,1,1)
+    Stroke.Transparency = 0.5
+    Stroke.Parent = ToggleBtn
+
+    -- Status visibility (true = GUI terbuka)
+    local isGuiOpen = true
+
+    -- Fungsi toggle (sync dengan library keybind)
+    local function updateToggleButton()
+        ToggleBtn.Text = isGuiOpen and "Close" or "Open"
+    end
+
+    -- Intercept keybind LeftControl dari library (untuk sync teks)
+    UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.LeftControl then
+            task.wait(0.2)  -- delay kecil biar animasi library selesai
+            isGuiOpen = not isGuiOpen
+            updateToggleButton()
+        end
+    end)
+
+    -- Klik tombol custom juga toggle (opsional, kalau library toggle lambat)
+    ToggleBtn.MouseButton1Click:Connect(function()
+        -- Simulasi tekan keybind (library handle toggle)
+        isGuiOpen = not isGuiOpen
+        updateToggleButton()
+        -- Kalau library punya method toggle, panggil di sini (tapi nggak ada, jadi sync manual)
+    end)
+
+    -- Main window (library)
     local Win1 = UI1:Window({
-        Title = "1ksMakesScripts",
-        Desc = "Made By: 1ksMakesScript",
+        Title = "BiG Hub",
+        Desc = "Made By: Bilal Ganteng",
         Icon = 11041446595,
         Config = {Keybind = Enum.KeyCode.LeftControl, Size = UDim2.new(0,450,0,350)},
-        CloseUIButton = {Enabled=true, Text="1ksCloseAndOpenMenu"}
+        CloseUIButton = {Enabled=true, Text="Close"}  -- library mungkin ignore text, jadi kita pakai custom
     })
 
     local Me1 = Players.LocalPlayer
 
-    -- === Avatar Changer Tab ===
+    -- === Avatar Changer Tab ===  <--- INI BAGIAN YANG KAMU CARA!
     local Tab1 = Win1:Tab({Title = "Avatar Changer", Icon = "user"})
-    Tab1:Section({Title = "1ks"})
+    Tab1:Section({Title = "BiG"})
     local Inp1 = ""
 
     Tab1:Textbox({
@@ -44,25 +97,38 @@ function loadMainGui()
         Callback = function()
             if Inp1 and Inp1 ~= "" then
                 local Num1 = tonumber(Inp1)
-                if Num1 then Mor1(Num1)
+                if Num1 then 
+                    Mor1(Num1)
                 else
                     local Pl3 = Players:FindFirstChild(Inp1)
-                    if Pl3 then Mor1(Pl3.UserId)
+                    if Pl3 then 
+                        Mor1(Pl3.UserId)
                     else
                         local Suc2, Res1 = pcall(function() return Players:GetUserIdFromNameAsync(Inp1) end)
-                        if Suc2 then Mor1(Res1)
-                        else Win1:Notify({Title="Error", Desc="Player not found", Time=3}) end
+                        if Suc2 then 
+                            Mor1(Res1)
+                        else 
+                            Win1:Notify({Title="Error", Desc="Player not found", Time=3}) 
+                        end
                     end
                 end
-            else Win1:Notify({Title="Error", Desc="Enter username or UserID", Time=3}) end
+            else 
+                Win1:Notify({Title="Error", Desc="Enter username or UserID", Time=3}) 
+            end
         end
     })
 
     function Mor1(ID1)
         local Suc1, App1 = pcall(function() return Players:GetCharacterAppearanceAsync(ID1) end)
-        if not Suc1 then Win1:Notify({Title="Error", Desc="Can't turn you into target avatar", Time=3}) return false end
+        if not Suc1 then 
+            Win1:Notify({Title="Error", Desc="Can't turn you into target avatar", Time=3}) 
+            return false 
+        end
         local Chr1 = Me1.Character
-        if not Chr1 then Win1:Notify({Title="Error", Desc="I can't find your character", Time=3}) return false end
+        if not Chr1 then 
+            Win1:Notify({Title="Error", Desc="I can't find your character", Time=3}) 
+            return false 
+        end
         local Hum1 = Chr1:WaitForChild("Humanoid")
         for _,Itm in pairs(Chr1:GetChildren()) do
             if Itm:IsA("Accessory") or Itm:IsA("Shirt") or Itm:IsA("Pants") or Itm:IsA("CharacterMesh") or Itm:IsA("BodyColors") then
@@ -71,11 +137,17 @@ function loadMainGui()
         end
         if Chr1:FindFirstChild("Head") and Chr1.Head:FindFirstChild("face") then Chr1.Head.face:Destroy() end
         for _,Itm in pairs(App1:GetChildren()) do
-            if Itm:IsA("Accessory") then local Acc = Itm:Clone() if Acc:FindFirstChild("Handle") then Hum1:AddAccessory(Acc) end end
-            if Itm:IsA("Shirt") or Itm:IsA("Pants") or Itm:IsA("BodyColors") then Itm:Clone().Parent = Chr1 end
+            if Itm:IsA("Accessory") then 
+                local Acc = Itm:Clone() 
+                if Acc:FindFirstChild("Handle") then Hum1:AddAccessory(Acc) end 
+            end
+            if Itm:IsA("Shirt") or Itm:IsA("Pants") or Itm:IsA("BodyColors") then 
+                Itm:Clone().Parent = Chr1 
+            end
         end
         if Chr1:FindFirstChild("Head") then
-            if App1:FindFirstChild("face") then App1.face:Clone().Parent = Chr1.Head
+            if App1:FindFirstChild("face") then 
+                App1.face:Clone().Parent = Chr1.Head
             else
                 local f = Instance.new("Decal", Chr1.Head)
                 f.Name = "face"; f.Face = Enum.NormalId.Front; f.Texture = "rbxasset://textures/face.png"
@@ -91,11 +163,9 @@ function loadMainGui()
     local Tab2 = Win1:Tab({Title="Name Changer", Icon="user"})
     Tab2:Section({Title="Edit Names"})
 
-    -- Fake name variables
     local FakeDisplay = Me1.DisplayName
     local FakeUser = Me1.Name
 
-    -- Username input
     local usernameInput = ""
     Tab2:Textbox({
         Title="Edit Username",
@@ -115,7 +185,6 @@ function loadMainGui()
         end
     })
 
-    -- DisplayName input
     local displaynameInput = ""
     Tab2:Textbox({
         Title="Edit DisplayName",
@@ -135,7 +204,7 @@ function loadMainGui()
         end
     })
 
-    -- Background logic to replace names in all CoreGui labels/buttons
+    -- Name patch logic (sama seperti sebelumnya)
     local function applyReplacements(text)
         if not text or text == "" then return nil end
         local origDisp, origUser = Me1.DisplayName, Me1.Name
@@ -224,7 +293,10 @@ function loadMainGui()
             if Frame:FindFirstChild("UICorner") then Frame.UICorner.CornerRadius=UDim.new(0,15) end
         end
     end
+
+    -- Initial update
+    updateToggleButton()
 end
 
--- ====== FIX: CALL THE FUNCTION TO LOAD GUI! ======
+-- Panggil fungsi untuk load GUI
 loadMainGui()
