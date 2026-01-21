@@ -4,7 +4,6 @@ local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 -- ====== FORWARD DECLARE MAIN GUI ======
 local function loadMainGui() end
@@ -14,70 +13,94 @@ function loadMainGui()
     -- Load the UI framework
     local UI1 = loadstring(game:HttpGet("https://gist.githubusercontent.com/1ksScripts/9677b4adf372380252e8e840209094e0/raw/18a19028d2114df920421eba871e37fee43aa59f/1ksMakesScriptBestScriptUniversal"))()
 
-    -- Buat ScreenGui custom untuk tombol Open/Close (pink, mudah dilihat)
-    local ToggleGui = Instance.new("ScreenGui")
-    ToggleGui.Name = "BiGToggleGui"
-    ToggleGui.ResetOnSpawn = false
-    ToggleGui.Parent = CoreGui
-
-    local ToggleBtn = Instance.new("TextButton")
-    ToggleBtn.Name = "ToggleBtn"
-    ToggleBtn.Size = UDim2.new(0, 100, 0, 40)
-    ToggleBtn.Position = UDim2.new(1, -120, 0, 10)  -- pojok kanan atas, bisa diganti
-    ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)  -- pink cartoony
-    ToggleBtn.TextColor3 = Color3.new(1,1,1)
-    ToggleBtn.Font = Enum.Font.SourceSansBold
-    ToggleBtn.TextSize = 20
-    ToggleBtn.Text = "Close"  -- awal GUI terbuka
-    ToggleBtn.BorderSizePixel = 0
-    ToggleBtn.Parent = ToggleGui
-
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 10)
-    Corner.Parent = ToggleBtn
-
-    local Stroke = Instance.new("UIStroke")
-    Stroke.Color = Color3.new(1,1,1)
-    Stroke.Transparency = 0.5
-    Stroke.Parent = ToggleBtn
-
-    -- Status visibility (true = GUI terbuka)
-    local isGuiOpen = true
-
-    -- Fungsi toggle (sync dengan library keybind)
-    local function updateToggleButton()
-        ToggleBtn.Text = isGuiOpen and "Close" or "Open"
-    end
-
-    -- Intercept keybind LeftControl dari library (untuk sync teks)
-    UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.LeftControl then
-            task.wait(0.2)  -- delay kecil biar animasi library selesai
-            isGuiOpen = not isGuiOpen
-            updateToggleButton()
-        end
-    end)
-
-    -- Klik tombol custom juga toggle (opsional, kalau library toggle lambat)
-    ToggleBtn.MouseButton1Click:Connect(function()
-        -- Simulasi tekan keybind (library handle toggle)
-        isGuiOpen = not isGuiOpen
-        updateToggleButton()
-        -- Kalau library punya method toggle, panggil di sini (tapi nggak ada, jadi sync manual)
-    end)
-
-    -- Main window (library)
+    -- Main window (DISABLE CloseUIButton bawaan biar nggak ada tombol ganda)
     local Win1 = UI1:Window({
         Title = "BiG Hub",
         Desc = "Made By: Bilal Ganteng",
         Icon = 11041446595,
         Config = {Keybind = Enum.KeyCode.LeftControl, Size = UDim2.new(0,450,0,350)},
-        CloseUIButton = {Enabled=true, Text="Close"}  -- library mungkin ignore text, jadi kita pakai custom
+        CloseUIButton = {Enabled = false}  -- Disable bawaan!
     })
 
     local Me1 = Players.LocalPlayer
 
-    -- === Avatar Changer Tab ===  <--- INI BAGIAN YANG KAMU CARA!
+    -- Tunggu library buat ScreenGui-nya & find instance penting (Shadow_1 & Background_1 CanvasGroup)
+    task.wait(0.5)
+    local libraryGui
+    for _, gui in pairs(CoreGui:GetChildren()) do
+        if gui:IsA("ScreenGui") and gui:FindFirstChild("Shadow_1", true) then
+            libraryGui = gui
+            break
+        end
+    end
+    if not libraryGui then
+        Win1:Notify({Title="Error", Desc="Library GUI not found", Time=5})
+        return
+    end
+    local Shadow_1 = libraryGui:FindFirstChild("Shadow_1", true)
+    local Background_1 = libraryGui:FindFirstChild("Background_1", true)  -- CanvasGroup utama
+    local oSize = Background_1.Size  -- Simpan ukuran original
+
+    -- Buat SATU tombol toggle custom (style MIRIP library default: dark gray, bukan pink!)
+    local ToggleGui = Instance.new("ScreenGui")
+    ToggleGui.Name = "BiGToggleFixed"
+    ToggleGui.ResetOnSpawn = false
+    ToggleGui.Parent = CoreGui
+
+    local ToggleBtn = Instance.new("TextButton")
+    ToggleBtn.Name = "ToggleBtnFixed"
+    ToggleBtn.Size = UDim2.new(0, 80, 0, 35)
+    ToggleBtn.Position = UDim2.new(0, 10, 0, 10)  -- Atas kiri, mirip library CloseUI
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)  -- Dark gray seperti library default
+    ToggleBtn.TextColor3 = Color3.new(1, 1, 1)  -- White text
+    ToggleBtn.Font = Enum.Font.GothamBold
+    ToggleBtn.TextSize = 14
+    ToggleBtn.Text = "Close"  -- Awal terbuka
+    ToggleBtn.BorderSizePixel = 0
+    ToggleBtn.Parent = ToggleGui
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 8)
+    BtnCorner.Parent = ToggleBtn
+
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Color = Color3.fromRGB(60, 60, 60)
+    BtnStroke.Thickness = 1
+    BtnStroke.Parent = ToggleBtn
+
+    -- Fungsi toggle manual (copy logic library: tween GroupTransparency + Size + Shadow.Visible)
+    local function toggleWindow()
+        local trans = Background_1.GroupTransparency
+        local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Linear)
+        if trans < 0.5 then  -- Terbuka → tutup
+            local shrinkTween = TweenService:Create(Background_1, tweenInfo, {
+                GroupTransparency = 1,
+                Size = Background_1.Size - UDim2.new(0, 5, 0, 5)
+            })
+            shrinkTween:Play()
+            shrinkTween.Completed:Connect(function()
+                Shadow_1.Visible = false
+            end)
+        else  -- Tertutup → buka
+            Shadow_1.Visible = true
+            local openTween = TweenService:Create(Background_1, tweenInfo, {
+                GroupTransparency = 0,
+                Size = oSize
+            })
+            openTween:Play()
+        end
+    end
+
+    -- Click tombol → toggle
+    ToggleBtn.MouseButton1Click:Connect(toggleWindow)
+
+    -- Sync text real-time (cek transparency CanvasGroup)
+    RunService.Heartbeat:Connect(function()
+        local trans = Background_1.GroupTransparency
+        ToggleBtn.Text = (trans < 0.5) and "Close" or "Open"
+    end)
+
+    -- === Avatar Changer Tab ===
     local Tab1 = Win1:Tab({Title = "Avatar Changer", Icon = "user"})
     Tab1:Section({Title = "BiG"})
     local Inp1 = ""
@@ -97,38 +120,25 @@ function loadMainGui()
         Callback = function()
             if Inp1 and Inp1 ~= "" then
                 local Num1 = tonumber(Inp1)
-                if Num1 then 
-                    Mor1(Num1)
+                if Num1 then Mor1(Num1)
                 else
                     local Pl3 = Players:FindFirstChild(Inp1)
-                    if Pl3 then 
-                        Mor1(Pl3.UserId)
+                    if Pl3 then Mor1(Pl3.UserId)
                     else
                         local Suc2, Res1 = pcall(function() return Players:GetUserIdFromNameAsync(Inp1) end)
-                        if Suc2 then 
-                            Mor1(Res1)
-                        else 
-                            Win1:Notify({Title="Error", Desc="Player not found", Time=3}) 
-                        end
+                        if Suc2 then Mor1(Res1)
+                        else Win1:Notify({Title="Error", Desc="Player not found", Time=3}) end
                     end
                 end
-            else 
-                Win1:Notify({Title="Error", Desc="Enter username or UserID", Time=3}) 
-            end
+            else Win1:Notify({Title="Error", Desc="Enter username or UserID", Time=3}) end
         end
     })
 
     function Mor1(ID1)
         local Suc1, App1 = pcall(function() return Players:GetCharacterAppearanceAsync(ID1) end)
-        if not Suc1 then 
-            Win1:Notify({Title="Error", Desc="Can't turn you into target avatar", Time=3}) 
-            return false 
-        end
+        if not Suc1 then Win1:Notify({Title="Error", Desc="Can't turn you into target avatar", Time=3}) return false end
         local Chr1 = Me1.Character
-        if not Chr1 then 
-            Win1:Notify({Title="Error", Desc="I can't find your character", Time=3}) 
-            return false 
-        end
+        if not Chr1 then Win1:Notify({Title="Error", Desc="I can't find your character", Time=3}) return false end
         local Hum1 = Chr1:WaitForChild("Humanoid")
         for _,Itm in pairs(Chr1:GetChildren()) do
             if Itm:IsA("Accessory") or Itm:IsA("Shirt") or Itm:IsA("Pants") or Itm:IsA("CharacterMesh") or Itm:IsA("BodyColors") then
@@ -137,17 +147,11 @@ function loadMainGui()
         end
         if Chr1:FindFirstChild("Head") and Chr1.Head:FindFirstChild("face") then Chr1.Head.face:Destroy() end
         for _,Itm in pairs(App1:GetChildren()) do
-            if Itm:IsA("Accessory") then 
-                local Acc = Itm:Clone() 
-                if Acc:FindFirstChild("Handle") then Hum1:AddAccessory(Acc) end 
-            end
-            if Itm:IsA("Shirt") or Itm:IsA("Pants") or Itm:IsA("BodyColors") then 
-                Itm:Clone().Parent = Chr1 
-            end
+            if Itm:IsA("Accessory") then local Acc = Itm:Clone() if Acc:FindFirstChild("Handle") then Hum1:AddAccessory(Acc) end end
+            if Itm:IsA("Shirt") or Itm:IsA("Pants") or Itm:IsA("BodyColors") then Itm:Clone().Parent = Chr1 end
         end
         if Chr1:FindFirstChild("Head") then
-            if App1:FindFirstChild("face") then 
-                App1.face:Clone().Parent = Chr1.Head
+            if App1:FindFirstChild("face") then App1.face:Clone().Parent = Chr1.Head
             else
                 local f = Instance.new("Decal", Chr1.Head)
                 f.Name = "face"; f.Face = Enum.NormalId.Front; f.Texture = "rbxasset://textures/face.png"
@@ -204,7 +208,7 @@ function loadMainGui()
         end
     })
 
-    -- Name patch logic (sama seperti sebelumnya)
+    -- Name patch logic
     local function applyReplacements(text)
         if not text or text == "" then return nil end
         local origDisp, origUser = Me1.DisplayName, Me1.Name
@@ -286,17 +290,14 @@ function loadMainGui()
 - This helps avoid conflicts with pressed folders and preserves your previous items.
 ]]})
 
-    -- === Permanent cartoony pink GUI ===
-    for _, Frame in pairs(Win1:Children()) do
+    -- === Permanent cartoony pink GUI (tetep ada) ===
+    for _, Frame in pairs(Win1:GetDescendants()) do  -- GetDescendants biar semua frame kena
         if Frame:IsA("Frame") then
             Frame.BackgroundColor3 = Color3.fromRGB(255,182,193)
-            if Frame:FindFirstChild("UICorner") then Frame.UICorner.CornerRadius=UDim.new(0,15) end
+            local corner = Frame:FindFirstChild("UICorner")
+            if corner then corner.CornerRadius = UDim.new(0,15) end
         end
     end
-
-    -- Initial update
-    updateToggleButton()
 end
 
--- Panggil fungsi untuk load GUI
 loadMainGui()
