@@ -33,7 +33,7 @@ function loadMainGui()
         Title = "Set target username or userid",
         Desc = "Enter any player username or UserID",
         Placeholder = "im cool",
-        Value = "npa_sab",
+        Value = "",
         ClearTextOnFocus = false,
         Callback = function(txt) Inp1 = txt end
     })
